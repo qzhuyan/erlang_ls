@@ -11,7 +11,10 @@
         , write/2
         , name/1
         , open/1
+        , write/3
         ]).
+
+-define(MS(Pattern), [{Pattern, [], ['$_']}]).
 
 %%==============================================================================
 %% Exported functions
@@ -39,36 +42,32 @@ delete_object(Table, Object) ->
 
 -spec lookup(atom(), any()) -> {ok, [tuple()]}.
 lookup(Table, Key) ->
-  Res = try eleveldb:get(handler(Table), term_to_binary(Key), []) of
+  Res = case eleveldb:get(handler(Table), term_to_binary(Key), []) of
           {ok, Bin} ->
             [binary_to_term(Bin)];
           not_found -> []
-        catch  badarg:_ ->
-            []
         end,
   {ok, Res}.
 
 -spec match(atom(), tuple()) -> {ok, [tuple()]}.
 match(Table, Pattern) when is_tuple(Pattern) ->
-  MS= [{Pattern, [], ['$_']}],
+  MS = ?MS(Pattern),
   {ok, do_match(handler(Table), MS)}.
 
 -spec match_delete(atom(), tuple()) -> ok.
 match_delete(Table, Pattern) when is_tuple(Pattern) ->
-  %% @todo use fold
-  {ok, Matched} = match(Table, Pattern),
-  case handler(Table) of
-    undefined -> ok;
-    H ->
-      lists:foreach(fun(X) ->
-                        delete(H, term_to_binary(element(2, X))) end,
-                    Matched)
-  end,
-  ok.
+  MS = ?MS(Pattern),
+  do_match_delete(handler(Table), MS).
 
 -spec write(atom(), tuple()) -> ok.
 write(Table, Object) when is_tuple(Object) ->
   Key = term_to_binary(element(2, Object)),
+  Val = term_to_binary(Object),
+  ok = eleveldb:put(handler(Table), Key, Val, []).
+
+-spec write(atom(), any(), tuple()) -> ok.
+write(Table, Key0, Object) when is_tuple(Object) ->
+  Key = term_to_binary(Key0),
   Val = term_to_binary(Object),
   ok = eleveldb:put(handler(Table), Key, Val, []).
 
@@ -86,12 +85,24 @@ clear_tables() ->
   ok.
 
 -spec do_match(reference(), tuple()) -> {ok, [any()]}.
-do_match(Tab, MS) ->
+do_match(H, MS) ->
   CMS = ets:match_spec_compile(MS),
   InitAcc = {[], [], CMS}, %% {Res, Buff}
-  {Res, Buff, CMS} = eleveldb:fold(Tab, fun match_fun/2, InitAcc, []),
+  {Res, Buff, CMS} = eleveldb:fold(H, fun match_fun/2, InitAcc, []),
   NewHits = ets:match_spec_run(Buff, CMS),
   NewHits ++ Res.
+
+-spec do_match_delete(reference(), tuple()) -> {ok, [any()]}.
+do_match_delete(Handler, MS) ->
+  CMS = ets:match_spec_compile(MS),
+  eleveldb:fold(Handler, fun({K, V}, _Acc) ->
+                         case ets:match_spec_run([binary_to_term(V)], CMS) of
+                           [] -> ok;
+                           _Hit ->
+                             eleveldb:delete(Handler, K, [])
+                         end
+                     end, [], []),
+  ok.
 
 -spec match_fun({binary(), binary()}, any()) -> any().
 match_fun({K, V}, {Res, Buff, CMS}) when length(Buff) > 1000 ->

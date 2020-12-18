@@ -80,7 +80,8 @@ delete_by_uri(Uri) ->
 -spec insert(poi_kind(), item()) -> ok | {error, any()}.
 insert(Kind, Map) when is_map(Map) ->
   Record = from_item(Kind, Map),
-  els_eleveldb:write(name(), Record).
+  Id = Record#?MODULE.id,
+  els_eleveldb:write(name(), {Id, make_ref()}, Record).
 
 %% @doc Find all
 -spec find_all() -> {ok, [item()]} | {error, any()}.
