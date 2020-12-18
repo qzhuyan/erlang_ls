@@ -27,7 +27,11 @@ tables() ->
 
 -spec delete(atom(), any()) -> ok.
 delete(Table, Key) ->
-  eleveldb:delete(handler(Table), term_to_binary(Key), []).
+  case handler(Table) of
+    undefined -> ok;
+    H ->
+      eleveldb:delete(H, term_to_binary(Key), [])
+  end.
 
 -spec delete_object(atom(), any()) -> ok.
 delete_object(Table, Object) ->
