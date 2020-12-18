@@ -72,11 +72,12 @@ to_item(#els_dt_document_index{id = Id, uri = Uri, kind = Kind}) ->
 insert(Map) when is_map(Map) ->
   Record = from_item(Map),
   Id = Record#?MODULE.id,
-  els_eleveldb:write(name(), Id, Record).
+  els_eleveldb:write(name(), {Id, make_ref()}, Record).
 
 -spec lookup(atom()) -> {ok, [item()]}.
 lookup(Id) ->
-  {ok, Items} = els_eleveldb:lookup(name(), Id),
+  Pattern = #els_dt_document_index{id = Id, _ = '_'},
+  {ok, Items} = els_eleveldb:match(name(), Pattern),
   {ok, [to_item(Item) || Item <- Items]}.
 
 -spec find_by_kind(els_dt_document:kind()) -> {ok, [item()]}.
