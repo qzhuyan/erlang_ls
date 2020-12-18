@@ -71,17 +71,17 @@ to_item(#els_dt_document_index{id = Id, uri = Uri, kind = Kind}) ->
 -spec insert(item()) -> ok | {error, any()}.
 insert(Map) when is_map(Map) ->
   Record = from_item(Map),
-  els_db:write(name(), Record).
+  els_eleveldb:write(name(), Record).
 
 -spec lookup(atom()) -> {ok, [item()]}.
 lookup(Id) ->
-  {ok, Items} = els_db:lookup(name(), Id),
+  {ok, Items} = els_eleveldb:lookup(name(), Id),
   {ok, [to_item(Item) || Item <- Items]}.
 
 -spec find_by_kind(els_dt_document:kind()) -> {ok, [item()]}.
 find_by_kind(Kind) ->
   Pattern = #els_dt_document_index{kind = Kind, _ = '_'},
-  {ok, Items} = els_db:match(name(), Pattern),
+  {ok, Items} = els_eleveldb:match(name(), Pattern),
   {ok, [to_item(Item) || Item <- Items]}.
 
 -spec new(atom(), uri(), els_dt_document:kind()) -> item().
