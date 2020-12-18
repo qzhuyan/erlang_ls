@@ -24,6 +24,7 @@
         , handle_call/3
         , handle_cast/2
         , handle_info/2
+        , terminate/2
         ]).
 -type state() :: #{}.
 
@@ -64,8 +65,14 @@ write(Table, Object) ->
 %%==============================================================================
 -spec init(unused) -> {ok, state()}.
 init(unused) ->
-  [ok = els_db_table:init(Table) || Table <- els_db:tables()],
-  {ok, #{}}.
+  eleveldb_handler = ets:new(eleveldb_handler, [named_table, public]),
+  Handlers = [begin
+                ok = els_db_table:init(Table),
+                {ok, H} = els_eleveldb:open(Table),
+                {els_eleveldb:name(Table), H}
+              end
+              || Table <- els_db:tables()],
+  {ok, #{handlers => Handlers}}. %% for ref cnt.
 
 -spec handle_call(any(), {pid(), any()}, state()) ->
         {reply, any(), state()} | {noreply, state()}.
@@ -92,3 +99,10 @@ handle_cast(_Request, State) ->
 -spec handle_info(any(), state()) -> {noreply, state()}.
 handle_info(_Request, State) ->
   {noreply, State}.
+
+-spec terminate(atom(), map()) -> any().
+terminate(_Reason, #{handlers := Handlers}) ->
+  lists:foreach(fun({Tab, H}) ->
+                    eleveldb:close(H),
+                    eleveldb:destroy(Tab, [])
+                end, Handlers).
