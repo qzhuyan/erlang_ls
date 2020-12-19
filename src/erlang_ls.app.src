@@ -19,6 +19,7 @@
       , tdiff
       , getopt
       , uuid
+      , eleveldb
       ]
     }
   , { env
