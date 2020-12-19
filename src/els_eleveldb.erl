@@ -121,7 +121,8 @@ handler(Table) ->
 
 -spec name(atom()) -> string().
 name(Table) ->
-  filename:join(["/tmp", node(), Table]).
+  Base = filename:basedir(user_cache, "erlang_ls"),
+  filename:join([Base, node(), leveldb, Table]).
 
 -spec open(atom()) -> ok.
 open(Table) ->
