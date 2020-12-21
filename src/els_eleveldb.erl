@@ -97,9 +97,9 @@ do_match_delete(Handler, MS) ->
   CMS = ets:match_spec_compile(MS),
   Batch = eleveldb:fold(Handler, fun({K, V}, Acc) ->
                          case ets:match_spec_run([binary_to_term(V)], CMS) of
-                           [] -> ok;
+                           [] -> Acc;
                            _Hit ->
-                             [{delete, K}|Acc]
+                             [{delete, K} | Acc]
                          end
                      end, [], []),
   ok = eleveldb:write(Handler, Batch, []).
