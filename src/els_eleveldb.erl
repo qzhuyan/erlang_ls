@@ -121,8 +121,9 @@ handler(Table) ->
 
 -spec name(atom()) -> string().
 name(Table) ->
+  Prefix = application:get_env(erlang_ls, db_dir, ""),
   ProjRoot = get_proj_root(),
-  filename:join([ProjRoot, ".els_cache", leveldb, Table]).
+  filename:join([Prefix, ProjRoot, ".els_cache", leveldb, Table]).
 
 -spec open(atom()) -> {ok, eleveldb:db_ref()} | {error, any()}.
 open(Table) ->
