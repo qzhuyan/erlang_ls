@@ -74,14 +74,15 @@ to_item(#els_dt_references{ id = {_Category, Id}, uri = Uri, range = Range }) ->
 
 -spec delete_by_uri(uri()) -> ok | {error, any()}.
 delete_by_uri(Uri) ->
-  Pattern = #els_dt_references{uri = Uri, _ = '_'},
-  ok = els_eleveldb:match_delete(name(), Pattern).
+  ok = els_eleveldb:del_idx(name(), Uri).
 
 -spec insert(poi_kind(), item()) -> ok | {error, any()}.
 insert(Kind, Map) when is_map(Map) ->
   Record = from_item(Kind, Map),
-  Id = Record#?MODULE.id,
-  els_eleveldb:write(name(), {Id, make_ref()}, Record).
+  Id = {Record#?MODULE.id, make_ref()},
+  Res = els_eleveldb:write(name(), Id, Record),
+  index_uri(Record#?MODULE.uri, Id),
+  Res.
 
 %% @doc Find all
 -spec find_all() -> {ok, [item()]} | {error, any()}.
@@ -120,3 +121,7 @@ kind_to_category(Kind) when Kind =:= record_expr;
   record;
 kind_to_category(Kind) when Kind =:= behaviour ->
   behaviour.
+
+-spec index_uri(uri(), {any(), reference()}) -> ok | {error, any()}.
+index_uri(Uri, Id) ->
+  els_eleveldb:add_idx(name(), Uri, Id).

@@ -12,6 +12,8 @@
         , name/1
         , open/1
         , write/3
+        , add_idx/3
+        , del_idx/2
         ]).
 
 -define(MS(Pattern), [{Pattern, [], ['$_']}]).
@@ -25,6 +27,7 @@ tables() ->
   [ els_dt_document
   , els_dt_document_index
   , els_dt_references
+  , els_dt_references_uri_idx
   , els_dt_signatures
   ].
 
@@ -70,6 +73,33 @@ write(Table, Key0, Object) when is_tuple(Object) ->
   Key = term_to_binary(Key0),
   Val = term_to_binary(Object),
   ok = eleveldb:put(handler(Table), Key, Val, []).
+
+-spec add_idx(atom(), Key::any(), Key2::any()) -> ok.
+add_idx(Table, IdxKey, Key0) ->
+  H = handler(Table),
+  Key = term_to_binary(IdxKey),
+  Existing = case eleveldb:get(H, Key, []) of
+               {ok, Old} ->
+                 binary_to_term(Old);
+               not_found ->
+                 []
+             end,
+  true = is_list(Existing),
+  Val = term_to_binary([term_to_binary(Key0) | Existing]),
+  eleveldb:put(H, Key, Val, []).
+
+-spec del_idx(atom(), Key::any()) -> ok.
+del_idx(Table, IdxKey) ->
+  H = handler(Table),
+  Key = term_to_binary(IdxKey),
+  case eleveldb:get(H, Key, []) of
+    not_found ->
+      ok;
+    {ok, KeysBin} ->
+      ok = eleveldb:delete(H, Key, []),
+      eleveldb:write(H, [{delete, X} || X <- binary_to_term(KeysBin)], []),
+      ok
+  end.
 
 -spec clear_table(atom()) -> ok.
 clear_table(Table) ->
