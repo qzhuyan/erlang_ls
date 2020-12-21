@@ -14,6 +14,7 @@
         , delete_object/2
         , match_delete/2
         , write/2
+        , init_tables/0
         ]).
 
 %%==============================================================================
@@ -60,22 +61,27 @@ match_delete(Table, Pattern) ->
 write(Table, Object) ->
   gen_server:call(?SERVER, {write, Table, Object}).
 
+-spec init_tables() -> ok.
+init_tables() ->
+  gen_server:call(?SERVER, init_tables).
+
 %%==============================================================================
 %% Callbacks for the gen_server behaviour
 %%==============================================================================
 -spec init(unused) -> {ok, state()}.
 init(unused) ->
   eleveldb_handler = ets:new(eleveldb_handler, [named_table, public]),
-  Handlers = [begin
-                ok = els_db_table:init(Table),
-                {ok, H} = els_eleveldb:open(Table),
-                {els_eleveldb:name(Table), H}
-              end
-              || Table <- els_db:tables()],
-  {ok, #{handlers => Handlers}}. %% for ref cnt.
+  {ok, #{}}.
 
 -spec handle_call(any(), {pid(), any()}, state()) ->
         {reply, any(), state()} | {noreply, state()}.
+handle_call(init_tables, _From, State) ->
+  Handlers = [begin
+                {ok, H} = els_eleveldb:open(Table),
+                {els_eleveldb:name(Table), H}
+              end
+              || Table <- els_eleveldb:tables()],
+  {reply, ok, State#{handlers => Handlers}};
 handle_call({clear_table, Table}, _From, State) ->
   true = ets:delete_all_objects(Table),
   {reply, ok, State};
@@ -106,3 +112,4 @@ terminate(_Reason, #{handlers := Handlers}) ->
                     eleveldb:close(H),
                     eleveldb:destroy(Tab, [])
                 end, Handlers).
+

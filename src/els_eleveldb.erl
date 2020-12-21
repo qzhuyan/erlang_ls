@@ -84,25 +84,25 @@ clear_tables() ->
   [ok = clear_table(T) || T <- tables()],
   ok.
 
--spec do_match(reference(), tuple()) -> {ok, [any()]}.
+-spec do_match(eleveldb:db_ref(), ets:match_spec()) -> [any()].
 do_match(H, MS) ->
   CMS = ets:match_spec_compile(MS),
-  InitAcc = {[], [], CMS}, %% {Res, Buff}
+  InitAcc = {[], [], CMS},
   {Res, Buff, CMS} = eleveldb:fold(H, fun match_fun/2, InitAcc, []),
   NewHits = ets:match_spec_run(Buff, CMS),
   NewHits ++ Res.
 
--spec do_match_delete(reference(), tuple()) -> {ok, [any()]}.
+-spec do_match_delete(eleveldb:db_ref(), ets:match_spec()) -> ok.
 do_match_delete(Handler, MS) ->
   CMS = ets:match_spec_compile(MS),
-  eleveldb:fold(Handler, fun({K, V}, _Acc) ->
+  Batch = eleveldb:fold(Handler, fun({K, V}, Acc) ->
                          case ets:match_spec_run([binary_to_term(V)], CMS) of
                            [] -> ok;
                            _Hit ->
-                             eleveldb:delete(Handler, K, [])
+                             [{delete, K}|Acc]
                          end
                      end, [], []),
-  ok.
+  ok = eleveldb:write(Handler, Batch, []).
 
 -spec match_fun({binary(), binary()}, any()) -> any().
 match_fun({K, V}, {Res, Buff, CMS}) when length(Buff) > 1000 ->
@@ -112,7 +112,7 @@ match_fun({K, V}, {Res, Buff, CMS}) when length(Buff) > 1000 ->
 match_fun({_K, V}, {Res, Buff, CMS}) ->
   {Res, [binary_to_term(V) | Buff], CMS}.
 
--spec handler(atom()) -> any().
+-spec handler(atom()) -> undefined | eleveldb:db_ref().
 handler(Table) ->
   case ets:lookup(eleveldb_handler, Table) of
     [{_, H}] -> H;
@@ -121,10 +121,10 @@ handler(Table) ->
 
 -spec name(atom()) -> string().
 name(Table) ->
-  Base = filename:basedir(user_cache, "erlang_ls"),
-  filename:join([Base, node(), leveldb, Table]).
+  ProjRoot = get_proj_root(),
+  filename:join([ProjRoot, "els_cache", leveldb, Table]).
 
--spec open(atom()) -> ok.
+-spec open(atom()) -> {ok, eleveldb:db_ref()} | {error, any()}.
 open(Table) ->
   DirName = name(Table),
   filelib:ensure_dir(DirName),
@@ -135,6 +135,10 @@ open(Table) ->
     Other ->
       Other
   end.
+
+-spec get_proj_root() -> file:name().
+get_proj_root() ->
+  binary_to_list(els_uri:path(els_config:get(root_uri))).
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
