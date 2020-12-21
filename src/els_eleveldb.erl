@@ -122,7 +122,7 @@ handler(Table) ->
 -spec name(atom()) -> string().
 name(Table) ->
   ProjRoot = get_proj_root(),
-  filename:join([ProjRoot, "els_cache", leveldb, Table]).
+  filename:join([ProjRoot, ".els_cache", leveldb, Table]).
 
 -spec open(atom()) -> {ok, eleveldb:db_ref()} | {error, any()}.
 open(Table) ->
