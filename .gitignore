@@ -24,4 +24,4 @@ current_counterexample.eqc
 *.log
 *.log.*
 doc
-priv/code_navigation/.els_cache/
+priv/*/.els_cache/
