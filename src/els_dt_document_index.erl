@@ -71,19 +71,24 @@ to_item(#els_dt_document_index{id = Id, uri = Uri, kind = Kind}) ->
 -spec insert(item()) -> ok | {error, any()}.
 insert(Map) when is_map(Map) ->
   Record = from_item(Map),
-  Id = Record#?MODULE.id,
-  els_eleveldb:write(name(), {Id, make_ref()}, Record).
+  Key = {Record#?MODULE.id, make_ref()},
+  Res = els_eleveldb:write(name(), Key, Record),
+  index_id(Record#?MODULE.id, Key),
+  index_kind(Record#?MODULE.kind, Key),
+  Res.
 
--spec lookup(atom()) -> {ok, [item()]}.
+-spec lookup(els_dt_document:id()) -> {ok, [item()]}.
 lookup(Id) ->
-  Pattern = #els_dt_document_index{id = Id, _ = '_'},
-  {ok, Items} = els_eleveldb:match(name(), Pattern),
-  {ok, [to_item(Item) || Item <- Items]}.
+  find_by(Id).
 
 -spec find_by_kind(els_dt_document:kind()) -> {ok, [item()]}.
 find_by_kind(Kind) ->
-  Pattern = #els_dt_document_index{kind = Kind, _ = '_'},
-  {ok, Items} = els_eleveldb:match(name(), Pattern),
+  find_by(Kind).
+
+-spec find_by(els_dt_document:kind() | els_dt_document:id()
+                  ) -> {ok, [item()]}.
+find_by(IdxKey) ->
+  Items = els_eleveldb:lookup_idx(name(), IdxKey),
   {ok, [to_item(Item) || Item <- Items]}.
 
 -spec new(atom(), uri(), els_dt_document:kind()) -> item().
@@ -92,3 +97,12 @@ new(Id, Uri, Kind) ->
    , uri  => Uri
    , kind => Kind
    }.
+
+-spec index_id(uri(), {any(), reference()}) -> ok | {error, any()}.
+index_id(Id, Key) ->
+  els_eleveldb:add_idx(name(), Id, Key).
+
+-spec index_kind(els_dt_document:kind(), {any(), reference()}) ->
+        ok | {error, any()}.
+index_kind(Kind, Key) ->
+  els_eleveldb:add_idx(name(), Kind, Key).

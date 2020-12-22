@@ -14,6 +14,7 @@
         , write/3
         , add_idx/3
         , del_idx/2
+        , lookup_idx/2
         ]).
 
 -define(MS(Pattern), [{Pattern, [], ['$_']}]).
@@ -100,6 +101,24 @@ del_idx(Table, IdxKey) ->
       eleveldb:write(H, [{delete, X} || X <- binary_to_term(KeysBin)], []),
       ok
   end.
+-spec lookup_idx(atom(), Key::any()) -> [any()].
+lookup_idx(Table, IdxKey) ->
+  H = handler(Table),
+  Key = term_to_binary(IdxKey),
+  do_lookup_idx(H, eleveldb:get(H, Key, [])).
+
+-spec do_lookup_idx(eleveldb:db_ref(), not_found | {ok, binary()})
+                   -> [any()].
+do_lookup_idx(_H, not_found) ->
+  [];
+do_lookup_idx(H, {ok, Res}) ->
+  Filter = fun(K, Acc) ->
+               case eleveldb:get(H, K, []) of
+                 not_found -> Acc;
+                 {ok, Found} -> [binary_to_term(Found) | Acc]
+               end
+           end,
+  lists:foldl(Filter, [], binary_to_term(Res)).
 
 -spec clear_table(atom()) -> ok.
 clear_table(Table) ->
