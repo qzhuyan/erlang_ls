@@ -7,6 +7,7 @@ all:
 install: all
 	@ echo "Installing escript..."
 	@ cp _build/default/bin/erlang_ls /usr/local/bin
+	@ cp _build/default/lib/eleveldb/priv/eleveldb.so /usr/local/bin
 
 ci:
 	rebar3 do compile, ct, proper --cover --constraint_tries 100, dialyzer, xref, cover, edoc
