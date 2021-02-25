@@ -142,6 +142,7 @@ do_initialize(RootUri, Capabilities, {ConfigPath, Config}) ->
           ),
   %% Init Options
   ok = set(capabilities  , Capabilities),
+  ok = els_db_server:init_tables(),
   ok.
 
 -spec start_link() -> {ok, pid()}.

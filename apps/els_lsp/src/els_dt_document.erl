@@ -113,11 +113,11 @@ to_item(#els_dt_document{ uri  = Uri
 -spec insert(item()) -> ok | {error, any()}.
 insert(Map) when is_map(Map) ->
   Record = from_item(Map),
-  els_db:write(name(), Record).
+  els_eleveldb:write(name(), Record).
 
 -spec lookup(uri()) -> {ok, [item()]}.
 lookup(Uri) ->
-  {ok, Items} = els_db:lookup(name(), Uri),
+  {ok, Items} = els_eleveldb:lookup(name(), Uri),
   {ok, [to_item(Item) || Item <- Items]}.
 
 -spec new(uri(), binary()) -> item().

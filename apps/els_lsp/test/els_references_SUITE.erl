@@ -253,7 +253,7 @@ record(Config) ->
 %% Issue #245
 -spec purge_references(config()) -> ok.
 purge_references(_Config) ->
-  els_db:clear_tables(),
+  els_eleveldb:clear_tables(),
   Uri   = <<"file:///tmp/foo.erl">>,
   Text0 = <<"-spec foo(integer()) -> ok.\nfoo(_X) -> ok.\nbar() -> foo(1).">>,
   Text1 = <<"\n-spec foo(integer()) -> ok.\nfoo(_X)-> ok.\nbar() -> foo(1).">>,

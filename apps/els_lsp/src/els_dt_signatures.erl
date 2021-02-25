@@ -68,9 +68,9 @@ to_item(#els_dt_signatures{ mfa = MFA, spec = Spec }) ->
 -spec insert(item()) -> ok | {error, any()}.
 insert(Map) when is_map(Map) ->
   Record = from_item(Map),
-  els_db:write(name(), Record).
+  els_eleveldb:write(name(), Record).
 
 -spec lookup(mfa()) -> {ok, [item()]}.
 lookup(MFA) ->
-  {ok, Items} = els_db:lookup(name(), MFA),
+  {ok, Items} = els_eleveldb:lookup(name(), MFA),
   {ok, [to_item(Item) || Item <- Items]}.
