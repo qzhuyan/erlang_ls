@@ -125,14 +125,15 @@ rename_macro(Config) ->
                                , start => #{character => 8, line => 0}}}
                        ]
                    , binary_to_atom(?config(rename_usage1_uri, Config), utf8) =>
-                       [ #{ newText => NewName
-                          , range =>
-                              #{ 'end' => #{character => 13, line => 15}
-                               , start => #{character => 4, line => 15}}}
-                       , #{ newText => NewName
+                       [
+                         #{ newText => NewName
                           , range =>
                               #{ 'end' => #{character => 25, line => 15}
                                , start => #{character => 16, line => 15}}}
+                       , #{ newText => NewName
+                          , range =>
+                              #{ 'end' => #{character => 13, line => 15}
+                               , start => #{character => 4, line => 15}}}
                        ]
                    , binary_to_atom(?config(rename_usage2_uri, Config), utf8) =>
                        [ #{ newText => NewName
@@ -159,14 +160,16 @@ rename_parametrized_macro(Config) ->
                                , start => #{character => 8, line => 2}}}
                        ]
                    , binary_to_atom(?config(rename_usage1_uri, Config), utf8) =>
-                       [ #{ newText => NewName
+                       [
+                        #{ newText => NewName
+                         , range =>
+                             #{ 'end' => #{character => 54, line => 18}
+                              , start => #{character => 32, line => 18}}}
+
+                       , #{ newText => NewName
                           , range =>
                               #{ 'end' => #{character => 26, line => 18}
                                , start => #{character => 4, line => 18}}}
-                       , #{ newText => NewName
-                          , range =>
-                              #{ 'end' => #{character => 54, line => 18}
-                               , start => #{character => 32, line => 18}}}
                        ]
                     , binary_to_atom(
                         ?config(rename_usage2_uri, Config), utf8) =>
@@ -196,12 +199,12 @@ rename_macro_from_usage(Config) ->
                    , binary_to_atom(?config(rename_usage1_uri, Config), utf8) =>
                        [ #{ newText => NewName
                           , range =>
-                              #{ 'end' => #{character => 13, line => 15}
-                               , start => #{character => 4, line => 15}}}
-                       , #{ newText => NewName
-                          , range =>
                               #{ 'end' => #{character => 25, line => 15}
                                , start => #{character => 16, line => 15}}}
+                       , #{ newText => NewName
+                          , range =>
+                              #{ 'end' => #{character => 13, line => 15}
+                               , start => #{character => 4, line => 15}}}
                        ]
                    , binary_to_atom(?config(rename_usage2_uri, Config), utf8) =>
                        [ #{ newText => NewName
