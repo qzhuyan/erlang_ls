@@ -71,17 +71,19 @@ init_tables() ->
 -spec init(unused) -> {ok, state()}.
 init(unused) ->
   eleveldb_handler = ets:new(eleveldb_handler, [named_table, public]),
-  {ok, #{}}.
+  {ok, #{handlers => undefined}}.
 
 -spec handle_call(any(), {pid(), any()}, state()) ->
         {reply, any(), state()} | {noreply, state()}.
-handle_call(init_tables, _From, State) ->
+handle_call(init_tables, _From, #{handlers := undefined} = State) ->
   Handlers = [begin
                 {ok, H} = els_eleveldb:open(Table),
                 {els_eleveldb:name(Table), H}
               end
               || Table <- els_eleveldb:tables()],
   {reply, ok, State#{handlers => Handlers}};
+handle_call(init_tables, _From, State) ->
+  {reply, ok, State};
 handle_call({clear_table, Table}, _From, State) ->
   true = ets:delete_all_objects(Table),
   {reply, ok, State};
