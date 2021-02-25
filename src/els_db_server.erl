@@ -27,7 +27,7 @@
         , handle_info/2
         , terminate/2
         ]).
--type state() :: #{}.
+-type state() :: map().
 
 %%==============================================================================
 %% Macro Definitions

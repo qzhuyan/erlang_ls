@@ -98,7 +98,7 @@ new(Id, Uri, Kind) ->
    , kind => Kind
    }.
 
--spec index_id(uri(), {any(), reference()}) -> ok | {error, any()}.
+-spec index_id(atom(), {any(), reference()}) -> ok.
 index_id(Id, Key) ->
   els_eleveldb:add_idx(name(), Id, Key).
 
