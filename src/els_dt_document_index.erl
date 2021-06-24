@@ -71,7 +71,8 @@ to_item(#els_dt_document_index{id = Id, uri = Uri, kind = Kind}) ->
 -spec insert(item()) -> ok | {error, any()}.
 insert(Map) when is_map(Map) ->
   Record = from_item(Map),
-  els_eleveldb:write(name(), Record).
+  Id = Record#?MODULE.id,
+  els_eleveldb:write(name(), Id, Record).
 
 -spec lookup(atom()) -> {ok, [item()]}.
 lookup(Id) ->
